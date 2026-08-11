@@ -1,0 +1,4 @@
+interface:
+  display_name: "CFA 等級投資研究報告"
+  short_description: "依固定格式產出具證據、估值與風險的上市公司研究報告"
+  default_prompt: "使用 $cfa-equity-research-report，為指定公司或股票代號產出一份 CFA 等級投資研究報告。"
