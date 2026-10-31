@@ -1,6 +1,6 @@
 # CFA Equity Research Report Skill
 
-一個可安裝到 Codex 的公開 skill，用於產出具來源、可重算估值、情境分析、催化劑與風險矩陣的上市公司股權研究報告。預設以繁體中文、固定七章 Markdown 格式交付，並要求把已報告實績、管理層指引、外部預估、分析師假設、本研究計算與推論清楚分開。
+一個可安裝到 Codex 的公開 skill，用於產出具來源、可重算估值、情境分析、催化劑與風險矩陣的上市公司股權研究報告。預設以繁體中文、固定八章 Markdown 格式交付，可再轉成投行版式 HTML 閱讀版，並要求把已報告實績、管理層指引、外部預估、分析師假設、本研究計算與推論清楚分開。
 
 ## English summary
 
@@ -8,12 +8,23 @@ This repository packages a Codex skill for evidence-driven public-equity researc
 
 ## 功能
 
-- 固定七章的上市公司研究報告結構。
+- 固定八章的上市公司研究報告結構。
 - 同一研究基準日的市場資料、財報與估值輸入。
 - 一級來源優先的證據帳本與鄰近引用要求。
 - 至少一個主估值法、交叉檢查、Bear／Base／Bull 情境、敏感度與 Reverse Valuation。
-- 12 個月與 36 個月目標價、催化劑、風險矩陣與 thesis falsifiers。
-- `validate_report.py` 結構、表格、來源註記與不可交付引用檢查。
+- 12 個月與 36 個月目標價，內在價值與偏貴提醒價雙軌；催化劑、風險矩陣與 thesis falsifiers。
+- 籌碼與未來 30 天事件交易計畫（`references/positioning-and-trade-plan.md`）。
+- 九個產業模板（晶圓代工、IC 設計、記憶體、光通訊、被動元件、軟體 SaaS、網路平台、金融、加密資產），含 KPI 與估值方法選擇（`references/industry/`）。
+- 子代理分工協定與派工簡報（`references/subagent-research-protocol.md`、`references/subagent-brief.md`）。
+- `validate_report.py` 結構、表格、來源註記、評級與報酬一致性及不可交付引用檢查。
+- `finalize_report.py` 驗證已審閱 MD 的 SHA-256 後產出 HTML，並做文字覆蓋檢查（`references/delivery.md`）。
+
+## 外部依賴
+
+- 預設資料入口為 ToAlpha MCP（台股 `https://toalpha.tw/mcp`、美股 `https://toalpha.tw/mcp/us`），原始申報用於關鍵核驗；細節見 `references/data-sources.md`。
+- `finalize_report.py` 的 `--renderer-dir` 指向另一個 HTML 排版 skill（`ib-equity-research`），不在本 repository 內。只要 Markdown 報告時不需要它。
+- `references/data-sources.md` 提到的 `tools/tech.py`（Yahoo chart API 現價與技術面）屬於研究專案，不隨本 skill 發布。
+- 輸出路徑與論點檔契約以研究專案的 `AGENTS.md` 為準；在其他專案使用時，需自行定義輸出位置。
 
 ## 限制與使用邊界
 
@@ -87,7 +98,7 @@ SKILL_DIR="${CLAUDE_SKILL_DIR:-${CODEX_HOME:-$HOME/.codex}/skills/cfa-equity-res
 python3 "$SKILL_DIR/scripts/validate_report.py" report.md --strict
 ```
 
-`--strict` 會要求七個章節、至少 10 個 Markdown 表格、至少 7 個資料來源／計算註記及至少 8 個可點擊外部來源；通過不代表數字已經獨立查證。
+`--strict` 會要求八個章節、至少 10 個 Markdown 表格、至少 7 個資料來源／計算註記及至少 8 個可點擊外部來源；通過不代表數字已經獨立查證。
 
 ### 編譯檢查與 smoke test
 
@@ -97,6 +108,7 @@ python3 "$SKILL_DIR/scripts/validate_report.py" report.md --strict
 PYTHONPYCACHEPREFIX="${TMPDIR:-/tmp}/cfa-equity-research-skill-pycache" \
   python3 -m py_compile skills/cfa-equity-research-report/scripts/validate_report.py
 python3 skills/cfa-equity-research-report/scripts/validate_report.py --help
+python3 -m pytest -q skills/cfa-equity-research-report/scripts/test_finalize_report.py
 ```
 
 ## 資料來源需求
@@ -131,7 +143,18 @@ cfa-equity-research-skill/
         ├── SKILL.md
         ├── agents/openai.yaml
         ├── references/
-        └── scripts/validate_report.py
+        │   ├── report-blueprint.md
+        │   ├── research-and-valuation-standards.md
+        │   ├── data-sources.md
+        │   ├── positioning-and-trade-plan.md
+        │   ├── delivery.md
+        │   ├── subagent-research-protocol.md
+        │   ├── subagent-brief.md
+        │   └── industry/
+        └── scripts/
+            ├── validate_report.py
+            ├── finalize_report.py
+            └── test_finalize_report.py
 ```
 
 ## 授權

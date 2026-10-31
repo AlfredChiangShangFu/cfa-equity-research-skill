@@ -4,6 +4,8 @@
 from __future__ import annotations
 
 import argparse
+import datetime as dt
+import json
 import re
 import sys
 from pathlib import Path
@@ -16,6 +18,7 @@ REQUIRED_HEADINGS = [
     "財務品質、單位經濟與客戶指標",
     "風險、監管與 ESG",
     "估值、情境與敏感度",
+    "籌碼與交易計畫",
     "投資論點、催化劑與最終建議",
 ]
 
@@ -45,7 +48,9 @@ def parse_args() -> argparse.Namespace:
     return parser.parse_args()
 
 
-def validate(text: str, strict: bool) -> tuple[list[str], list[str]]:
+def validate(
+    text: str, strict: bool, report_path: Path | None = None
+) -> tuple[list[str], list[str]]:
     errors: list[str] = []
     warnings: list[str] = []
 
@@ -61,7 +66,11 @@ def validate(text: str, strict: bool) -> tuple[list[str], list[str]]:
             positions.append(match.start())
 
     if len(positions) == len(REQUIRED_HEADINGS) and positions != sorted(positions):
-        errors.append("七個必要 H2 的順序不正確。")
+        errors.append("八個必要 H2 的順序不正確。")
+
+    actual_headings = re.findall(r"^## (.+?)\s*$", text, re.M)
+    if actual_headings != REQUIRED_HEADINGS:
+        errors.append("報告必須依序使用固定的八個 H2，且不得新增其他 H2。")
 
     summary_match = re.search(
         r"^## 執行摘要\s*$([\s\S]*?)(?=^## )", text, re.M
@@ -92,6 +101,84 @@ def validate(text: str, strict: bool) -> tuple[list[str], list[str]]:
         if re.search(pattern, text, re.I):
             errors.append(f"含不可交付的內部引用或路徑：{pattern}")
 
+    first_para = re.split(r"\n\s*\n", summary.strip(), maxsplit=1)[0] if summary.strip() else ""
+
+    date_match = re.search(
+        r"研究基準日[^\d\n]{0,12}(\d{4})\s*[-/年]\s*(\d{1,2})\s*[-/月]\s*(\d{1,2})\s*日?", summary
+    )
+    if date_match:
+        try:
+            base_date = dt.date(*(int(g) for g in date_match.groups()))
+            if base_date > dt.date.today():
+                errors.append(f"研究基準日 {base_date} 晚於今天。")
+        except ValueError:
+            errors.append(f"研究基準日無法解析：{date_match.group(0)}")
+    else:
+        errors.append("執行摘要找不到研究基準日（YYYY-MM-DD 或 YYYY 年 M 月 D 日）。")
+
+    number = r"([\d,]+(?:\.\d+)?)"
+
+    # 評級可依 Base 總報酬或機率加權總報酬，report 須標示用的是哪一種。
+    # 有標示機率加權時直接拿該數字對 standards 門檻，不必經由 Base 目標價換算。
+    weighted = re.search(
+        r"最終評級[^\n]*?機率加權[^\n]*?總報酬\s*([+\-−])?\s*([\d.]+)\s*%", text
+    )
+    if weighted:
+        ret = float(weighted.group(2)) / 100
+        if weighted.group(1) in ("-", "−"):
+            ret = -ret
+        rating_w = re.search(r"最終評級[^\n]*?\b(BUY|HOLD|SELL)\b", text, re.I)
+        if rating_w:
+            call = rating_w.group(1).upper()
+            if call == "BUY" and ret < 0.15:
+                errors.append(
+                    f"評級 BUY 但機率加權 12 個月總報酬 {ret:+.1%} 未達 standards 門檻 +15%。"
+                )
+            if call == "SELL" and ret > -0.10:
+                errors.append(
+                    f"評級 SELL 但機率加權 12 個月總報酬 {ret:+.1%} 未達 standards 門檻 −10%。"
+                )
+            if call == "HOLD" and not (-0.10 < ret < 0.15):
+                errors.append(
+                    f"評級 HOLD 但機率加權 12 個月總報酬 {ret:+.1%} 落在 HOLD 區間之外。"
+                )
+
+    rating_match = None if weighted else re.search(r"\b(BUY|HOLD|SELL)\b", first_para)
+    price_match = re.search(r"(?:現價|收盤價)[^\d\n]{0,16}" + number, first_para)
+    target_match = re.search(r"12 個月[^\n\d]{0,24}目標價[^\d\n]{0,16}" + number, first_para)
+    if rating_match and price_match and target_match:
+        price = float(price_match.group(1).replace(",", ""))
+        target = float(target_match.group(1).replace(",", ""))
+        rating = rating_match.group(1)
+        if price > 0:
+            upside = target / price - 1
+            # standards 門檻用總報酬，本檢查只能算價格報酬，差額是股息，故留 5pp 緩衝帶
+            if rating == "BUY" and upside < 0.10:
+                errors.append(
+                    f"評級 BUY 但 12 個月目標價隱含價格報酬僅 {upside:+.1%}，"
+                    "股息無法補到 standards 要求的總報酬 +15%。"
+                )
+            elif rating == "BUY" and upside < 0.15:
+                warnings.append(
+                    f"評級 BUY 的價格報酬 {upside:+.1%} 低於 +15%，"
+                    "報告須寫明股息貢獻使總報酬達標。"
+                )
+            if rating == "SELL" and upside > -0.10:
+                errors.append(
+                    f"評級 SELL 但 12 個月目標價隱含價格報酬 {upside:+.1%}，"
+                    "未達 standards 要求的總報酬 ≤ −10%（股息只會使總報酬更高）。"
+                )
+            if rating == "HOLD" and upside >= 0.15:
+                errors.append(
+                    f"評級 HOLD 但 12 個月目標價隱含價格報酬 {upside:+.1%}，已達 BUY 門檻。"
+                )
+            elif rating == "HOLD" and upside <= -0.15:
+                warnings.append(
+                    f"評級 HOLD 但 12 個月目標價隱含價格報酬 {upside:+.1%}，接近或已過 SELL 門檻。"
+                )
+    elif not weighted:
+        warnings.append("執行摘要首段無法同時抽出評級、現價與 12 個月目標價，跳過評級方向檢查。")
+
     table_count = len(
         re.findall(r"^\|(?:\s*:?-{3,}:?\s*\|){2,}\s*$", text, re.M)
     )
@@ -115,11 +202,112 @@ def validate(text: str, strict: bool) -> tuple[list[str], list[str]]:
         if not re.search(r"(?:N/A|N/M|未揭露|限制)", text):
             warnings.append("未見資料限制或不可得資料標示，請確認是否過度完整。")
 
-    if len(text.split()) < 1200:
+    if len(text) < 12000:
         warnings.append("報告文字偏短，可能未達完整深度研究的分析密度。")
+
+    if report_path is not None:
+        check_artifacts(report_path, text, errors, warnings)
 
     return errors, warnings
 
+
+def check_artifacts(
+    report_path: Path, text: str, errors: list[str], warnings: list[str]
+) -> None:
+    """檢查同一份研究的下游產物。
+
+    build_research_index.js 讀 <AI 目錄>/SUMMARY.md 與 <AI 目錄>/model/valuation_summary.json；
+    缺檔時該筆研究會從索引靜默消失，不會有任何錯誤訊息。
+    """
+    ai_dir = None
+    for parent in report_path.resolve().parents:
+        if parent.name in ("claude", "codex"):
+            ai_dir = parent
+            break
+    if ai_dir is None:
+        warnings.append(
+            "報告不在 研究報告/<標的>/<派工日>/claude/ 之下，跳過產物與索引檢查。"
+        )
+        return
+
+    summary_path = ai_dir / "SUMMARY.md"
+    valuation_path = ai_dir / "model" / "valuation_summary.json"
+    thesis_path = ai_dir / "thesis.json"
+
+    if thesis_path.is_file():
+        # 2026-09-26 起索引只讀論點檔（AGENTS.md）；SUMMARY.md 與 valuation_summary.json 是舊格式，不再要求。
+        try:
+            thesis = json.loads(thesis_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            errors.append(f"thesis.json 不是合法 JSON：{exc}")
+            return
+        report_rating = re.search(r"最終評級[^\n]*?\b(BUY|HOLD|SELL)\b", text, re.I)
+        thesis_rating = str(thesis.get("評級", "")).upper()
+        if report_rating and thesis_rating and report_rating.group(1).upper() != thesis_rating:
+            errors.append(f"thesis.json 評級 {thesis_rating} 與報告最終評級 {report_rating.group(1).upper()} 不一致。")
+        if not list(report_path.parent.glob("*.dc.html")):
+            warnings.append("報告同層沒有 .dc.html，未產出投行版式 HTML。")
+        return
+
+    if not summary_path.is_file():
+        errors.append(f"缺少 {summary_path.name}，本筆研究不會進入 RESEARCH_INDEX。")
+    else:
+        summary_text = summary_path.read_text(encoding="utf-8")
+        if not re.search(r"評等[：:]", summary_text):
+            errors.append("SUMMARY.md 缺少『評等：』欄位，索引的評等欄會是空的。")
+        else:
+            report_rating = re.search(
+                r"最終評級[^\n]*?\b(BUY|HOLD|SELL)\b", text, re.I
+            )
+            summary_rating = re.search(
+                r"評等[：:]\s*[^\n]*?\b(BUY|HOLD|SELL)\b", summary_text, re.I
+            )
+            if (
+                report_rating
+                and summary_rating
+                and report_rating.group(1).upper() != summary_rating.group(1).upper()
+            ):
+                errors.append(
+                    f"SUMMARY.md 評等 {summary_rating.group(1).upper()} "
+                    f"與報告最終評級 {report_rating.group(1).upper()} 不一致。"
+                )
+
+    if not valuation_path.is_file():
+        errors.append(
+            "缺少 model/valuation_summary.json，本筆研究不會進入 RESEARCH_INDEX。"
+        )
+    else:
+        try:
+            data = json.loads(valuation_path.read_text(encoding="utf-8"))
+        except json.JSONDecodeError as exc:
+            errors.append(f"model/valuation_summary.json 不是合法 JSON：{exc}")
+            return
+        for field in ("fair_value_range", "conclusion"):
+            if data.get(field) in (None, "", []):
+                errors.append(f"valuation_summary.json 缺少必要欄位 {field}。")
+        target = data.get("target_12m")
+        if target is None:
+            warnings.append(
+                "valuation_summary.json 未提供 target_12m，"
+                "無法機械比對模型目標價與報告目標價。"
+            )
+        else:
+            summary_block = re.search(r"^## 執行摘要\s*$([\s\S]*?)(?=^## )", text, re.M)
+            head = summary_block.group(1) if summary_block else ""
+            first_para = re.split(r"\n\s*\n", head.strip(), maxsplit=1)[0] if head.strip() else ""
+            match = re.search(
+                r"12 個月[^\n\d]{0,24}目標價[^\d\n]{0,16}([\d,]+(?:\.\d+)?)", first_para
+            )
+            if match:
+                reported = float(match.group(1).replace(",", ""))
+                if reported > 0 and abs(reported - float(target)) / reported > 0.005:
+                    errors.append(
+                        f"模型 target_12m {target} 與報告 12 個月目標價 {reported} 不一致。"
+                    )
+
+    html = list((report_path.parent).glob("*.dc.html"))
+    if not html:
+        warnings.append("報告同層沒有 .dc.html，未產出投行版式 HTML。")
 
 def main() -> int:
     args = parse_args()
@@ -128,7 +316,7 @@ def main() -> int:
         return 2
 
     text = args.report.read_text(encoding="utf-8")
-    errors, warnings = validate(text, args.strict)
+    errors, warnings = validate(text, args.strict, args.report)
 
     for warning in warnings:
         print(f"警告：{warning}")
