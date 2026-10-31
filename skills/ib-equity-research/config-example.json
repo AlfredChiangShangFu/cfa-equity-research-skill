@@ -1,0 +1,73 @@
+{
+  "masthead": {
+    "name": "Broadcom Inc.",
+    "ticker": "AVGO",
+    "sector": "Semiconductors — AI infrastructure",
+    "kind": "Initiation",
+    "date": "2026-09-15",
+    "exchange": "Nasdaq",
+    "assetClass": "US equities",
+    "currency": "USD",
+    "market": "US"
+  },
+  "rating": {
+    "call": "SELL",
+    "qualifier": "Underperform　·　中等信心",
+    "cells": [
+      {
+        "label": "Last close 9/14",
+        "value": "344.72",
+        "sub": "市值 1.646 兆美元"
+      },
+      {
+        "label": "12M target　Base",
+        "value": "277.16",
+        "sub": "含息報酬 −18.8%",
+        "color": "#A32A1D"
+      },
+      {
+        "label": "36M target　Base",
+        "value": "345.10",
+        "sub": "含息報酬 +2.6%",
+        "color": "#17624A"
+      }
+    ],
+    "infoRow": [
+      "WACC / 永續成長 g　12.34% / 3.0%（FCFF DCF，扣 SBC 經濟成本）",
+      "Bear / Base / Bull 每股價值　96.28 · 248.43 · 443.87",
+      "評級門檻　BUY ≥ +15%　·　HOLD −10% ~ +15%　·　SELL ≤ −10%"
+    ]
+  },
+  "tagline": "好公司，貴股票",
+  "taglineSub": "AI 客製矽放量已見於實績，但現價要求的持續性與報酬率假設，超過本研究 Base 情境所能支撐。",
+  "footerNote": "研究基準日 2026-09-14",
+  "disclaimer": "研究資訊截點 2026-09-15 15:43 UTC（台灣 23:43）；估值採 9 月 14 日 16:00 美東完成收盤。",
+  "skip": [
+    "1.0"
+  ],
+  "callout": [
+    "1.6"
+  ],
+  "exhibits": {
+    "1": "投資快照 Investment snapshot",
+    "2": "收入引擎與收費機制",
+    "3": "AI 機櫃融資的風險關係",
+    "4": "需求觀察與口徑解讀",
+    "5": "同業定位與結構比較",
+    "6": "年度損益與現金流",
+    "7": "近五季損益與現金流",
+    "8": "核心 KPI 與追蹤理由",
+    "9": "資產負債表與每股品質",
+    "10": "風險矩陣",
+    "11": "估值橋接",
+    "12": "倍數與殖利率",
+    "13": "同業倍數比較",
+    "14": "折現率輸入",
+    "15": "情境假設",
+    "16": "Base 情境十年路徑",
+    "17": "DCF 結果",
+    "18": "敏感度",
+    "19": "目標價與含息報酬",
+    "20": "核心投資論點與支持證據"
+  }
+}

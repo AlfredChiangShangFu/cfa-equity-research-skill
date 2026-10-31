@@ -1,0 +1,72 @@
+{
+  "masthead": {
+    "name": "Rocket Lab Corporation",
+    "ticker": "RKLB",
+    "sector": "Space launch & systems",
+    "kind": "Initiation",
+    "date": "2026-08-14",
+    "exchange": "Nasdaq",
+    "assetClass": "US equities",
+    "currency": "USD",
+    "market": "US"
+  },
+  "rating": {
+    "call": "SELL",
+    "qualifier": "Underperform",
+    "cells": [
+      {
+        "label": "Last close 8/14",
+        "value": "80.25",
+        "sub": "市值 513.0 億美元；EV 489.5 億"
+      },
+      {
+        "label": "12M target　Base",
+        "value": "63",
+        "sub": "總報酬 −21.5%",
+        "color": "#A32A1D"
+      },
+      {
+        "label": "36M target　Base",
+        "value": "35",
+        "sub": "總報酬 −56.4%（年化 −24.2%）",
+        "color": "#A32A1D"
+      }
+    ],
+    "infoRow": [
+      "WACC / 終端成長 g　14.5% / 3.0%（2027–2040 FCFF DCF）",
+      "Bear / Base / Bull DCF 內含價值　0.93 · 7.28 · 19.11",
+      "分部加總 12M 價值　27 · 63 · 128",
+      "評級門檻　SELL 總報酬 ≤ −10%"
+    ]
+  },
+  "tagline": "現價的 88% 沒有現金流支撐",
+  "taglineSub": "當最好的情況只是打平，風險調整報酬的答案已經不需要再算。",
+  "footerNote": "研究基準日 2026-08-14",
+  "disclaimer": "研究基準日 2026-08-14（最近交易日）；股數採經濟股數 639,301,732 股（普通股 598,350,482 股＋Series A 可轉換參與特別股 40,951,250 股），與多數行情資料商的普通股口徑不同，詳見執行摘要來源註。",
+  "skip": [
+    "1.0"
+  ],
+  "callout": [
+    "1.6"
+  ],
+  "exhibits": {
+    "1": "投資快照 Investment snapshot",
+    "2": "收入引擎與收費機制",
+    "3": "垂直整合到經常性收入的路徑",
+    "4": "同業定位與結構比較",
+    "5": "年度損益與現金流",
+    "6": "近五季損益與現金流",
+    "7": "2026Q2 分部拆解",
+    "8": "單位經濟與能見度指標",
+    "9": "風險矩陣",
+    "10": "估值倍數",
+    "11": "Iridium 交易檢驗",
+    "12": "情境假設",
+    "13": "DCF 輸出",
+    "14": "每股價值敏感度",
+    "15": "Reverse DCF 市場隱含要求",
+    "16": "先例交易",
+    "17": "目標價與估值框架",
+    "18": "核心投資論點與支持證據"
+  }
+}
