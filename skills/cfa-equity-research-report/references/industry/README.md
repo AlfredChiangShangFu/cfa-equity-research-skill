@@ -36,9 +36,9 @@
 
 ## 產業圖
 
-每個模板定 1–2 張產業 KPI 圖，另依上市地加市場層圖。全部用 `charts.json` 的 `柱線` 類型（研究 repo `docs/研究輸出格式.md` 第七節），`id`、`標題`、`版面` 照模板，數列名照模板，未揭露的期間寫 null。
+每個模板定 1–2 張產業 KPI 圖，另依上市地加市場層圖。全部用 `charts.json` 的 `柱線` 類型（規格見 `ib-equity-research` 的 `charts-spec.md`，研究 repo 為 `docs/研究輸出格式.md` 第七節），`id`、`標題`、`版面` 照模板，數列名照模板，未揭露的期間寫 null。
 
-- 同層有非回填 `thesis.json` 的個股報告必須寫 `charts.json`，內含第七節八種必有圖加本模板產業圖；`build.js` 找不到 `charts.json` 或研究 repo 的 `tools/charts.js` 時會中止，HTML 不產出。其他報告（回填、產業研究、主題研究 `thesis-<代號>.json`）不寫 `charts.json`，產業圖數列放在 `data/` 供下次使用。
+- 同層有非回填 `thesis.json` 的個股報告必須寫 `charts.json`，內含第七節八種必有圖加本模板產業圖；`build.js` 找不到 `charts.json` 時會中止，HTML 不產出。其他報告（回填、產業研究、主題研究 `thesis-<代號>.json`）不寫 `charts.json`，產業圖數列放在 `data/` 供下次使用。
 - 繪圖程式柱最多 3 組、線最多 2 條，超過會重複用色。模板寫「最大 2 個…加其他」的數列照此取，其餘併為「其他」。
 - 季頻圖的年增線要多抓前 4 季，月頻年增要多抓前 12 個月，缺的期間寫 null。
 

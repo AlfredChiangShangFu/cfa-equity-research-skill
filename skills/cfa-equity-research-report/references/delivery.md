@@ -8,6 +8,8 @@ MD 是獨立可交付、內容完整的研究正文。HTML 保留 MD 未標記�
 
 檔案目錄、SUMMARY.md／valuation_summary.json 等契約以專案 AGENTS.md 的適用系統規則為準；不可把 Claude 專屬規則強加到 Codex。寫入限自己的系統目錄。
 
+專案沒有 AGENTS.md，或 AGENTS.md 沒規定研究產出路徑時，一份研究一個資料夾 `research/<代號>/<研究基準日>/`：報告 MD、`config.json`、`charts.json` 與 HTML 同層，原始回應放 `data/`，估值模型放 `model/`。不產生 thesis.json、SUMMARY.md 與 valuation_summary.json；validator 提示跳過產物檢查屬正常。
+
 ## 交付程序
 
 1. 主代理完成財經推理審閱，核對數據來源、模型、情境、評級及最強反證；允許讀回與修改。對 MD 的審閱是實質工作，不是產生 hash 就代表已完成。
@@ -23,7 +25,7 @@ python3 <本skill絕對路徑>/scripts/finalize_report.py \
 
 程序依序執行 hash 核對、既有 `validate_report.py --strict`（同層有 thesis.json 時不再要求 SUMMARY.md 與 valuation_summary.json）、暫存 HTML 建置、文字與連結覆蓋檢查（剝掉 `html:skip` 區塊與標記行、忽略儲存格內 `<br>`、時程軸逐格比對、mermaid 區塊不比對只計數），再發布 HTML 及 runtime。失敗不以新 HTML 覆蓋舊產物；同一輸出資料夾不可同時發布。回傳 JSON，無 LLM 呼叫。若只需 MD，執行 validator 與主代理審閱，不呼叫排版。
 
-renderer 由呼叫者傳明確路徑（本機為 `~/.claude/skills/ib-equity-research`，Codex 也可呼叫，不表示寫入 Claude 報告資料夾）；不得假設其他同名安裝版本內容相同。
+renderer 由呼叫者傳 `ib-equity-research` 的安裝路徑（Claude Code 預設 `~/.claude/skills/ib-equity-research`，Codex 預設 `~/.codex/skills/ib-equity-research`，該處沒有 build.js 時改用 Claude Code 的路徑；Codex 呼叫 Claude 的安裝版不表示寫入 Claude 報告資料夾）；不得假設其他同名安裝版本內容相同。
 
 4. 用實際瀏覽器檢查 HTML 的頭部、側欄並排、附錄、最後一章、來源與警語是否可見；未做就明寫尚未完成視覺 QA。程式文字覆蓋不是視覺 QA，也不驗證財經邏輯；JSON 的 `published` 只表示建置發布完成。
 5. 交付 MD、HTML 及必要模型／證據；排版失敗只報告排版缺口，保留合格 MD，修 renderer／config 後重試，不刪研究內容求通過。

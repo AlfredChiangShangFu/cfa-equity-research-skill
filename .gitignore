@@ -29,3 +29,6 @@ htmlcov/
 *.log
 reports/
 research-output/
+
+# Local skill backups
+*.bak*

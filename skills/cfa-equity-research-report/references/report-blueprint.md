@@ -1,6 +1,6 @@
 # 固定八章報告版型
 
-H1 寫 `# {法定公司名}（{交易所}: {Ticker}）CFA 等級投資研究報告`，之後只用下列八個 H2，名稱與順序固定。範例是封版的 2454 報告 `~/.claude/skills/ib-equity-research/reference-2454/`（MD、config.json、charts.json），對照時用 `grep -n` 抽段落，不整份讀。
+H1 寫 `# {法定公司名}（{交易所}: {Ticker}）CFA 等級投資研究報告`，之後只用下列八個 H2，名稱與順序固定。範例是封版的 2454 報告 `ib-equity-research` skill 的 `reference-2454/`（MD、config.json、charts.json），對照時用 `grep -n` 抽段落，不整份讀。
 
 ## 全篇寫法
 

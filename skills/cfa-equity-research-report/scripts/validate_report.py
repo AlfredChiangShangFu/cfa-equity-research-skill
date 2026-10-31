@@ -221,7 +221,8 @@ def check_artifacts(
     """
     ai_dir = None
     for parent in report_path.resolve().parents:
-        if parent.name in ("claude", "codex"):
+        # 只認 研究報告/<標的>/<派工日>/<claude|codex>/，避免外人路徑剛好有同名資料夾
+        if parent.name in ("claude", "codex") and parent.parts[-4:-3] == ("研究報告",):
             ai_dir = parent
             break
     if ai_dir is None:
